@@ -1,0 +1,48 @@
+#!/bin/bash
+
+# Set default drive if not provided
+if [ -z "$1" ]; then
+  # Use config file to get default drive
+  if [ -f ~/.config/df--/default.cfg ]; then
+    DRIVE=$(cat ~/.config/df--/default.cfg)
+  else
+    mkdir -p ~/.config/df--/
+    read -p "Enter default drive: " DRIVE
+    echo $DRIVE > ~/.config/df--/default.cfg
+  fi
+else
+  DRIVE=$1
+fi
+
+DRIVE_INFO=$(df -h | grep $DRIVE)
+
+# Print free space in a human-readable format
+drive_name=$(echo $DRIVE_INFO | awk '{print $1}')
+# If drive name is empty, then the drive does not exist
+if [ -z "$drive_name" ]; then
+  echo "Drive $DRIVE does not exist"
+  exit 1
+fi
+
+drive_size=$(echo $DRIVE_INFO | awk '{print $2}')
+drive_used=$(echo $DRIVE_INFO | awk '{print $3}')
+drive_free=$(echo $DRIVE_INFO | awk '{print $4}')
+drive_percent=$(echo $DRIVE_INFO | awk '{print $5}')
+mounted_on=$(echo $DRIVE_INFO | awk '{print $6}')
+
+echo "Drive: $drive_name"
+echo "Size: $drive_size"
+echo "Used: $drive_used"
+echo "Free: $drive_free"
+percent_value=$(echo $drive_percent | tr -d '%')
+
+if [ $percent_value -lt 60 ]; then
+  color="\033[32m"  # Green
+elif [ $percent_value -lt 80 ]; then
+  color="\033[33m"  # Yellow
+else
+  color="\033[31m"  # Red
+fi
+
+echo -e "Percent: ${color}$drive_percent\033[0m"
+echo "Mounted on: $mounted_on"
